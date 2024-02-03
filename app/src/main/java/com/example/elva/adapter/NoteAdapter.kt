@@ -10,17 +10,23 @@ import com.example.elva.databinding.NoteListItemBinding
 import com.example.elva.dto.Note
 
 interface NoteInteractionListener {
+    fun noteChanged(id: Long, newNote: Note): Note
 
+    fun noteDeleted(id: Long): Note
+
+
+
+    // TODO: implement post interaction
 }
 
-class NoteAdapter(noteInteractionListener: NoteInteractionListener)
+class NoteAdapter(private val noteInteractionListener: NoteInteractionListener)
     : ListAdapter<Note, NoteAdapter.NoteViewHolder>(NoteDiffCallback) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): NoteViewHolder {
         val binding = NoteListItemBinding.inflate(
             LayoutInflater.from(parent.context), parent, false)
 
-        return NoteViewHolder(binding.root, binding)
+        return NoteViewHolder(binding.root, binding, noteInteractionListener)
     }
 
     override fun onBindViewHolder(holder: NoteViewHolder, position: Int) {
@@ -28,11 +34,17 @@ class NoteAdapter(noteInteractionListener: NoteInteractionListener)
         holder.bind(note)
     }
 
-    class NoteViewHolder(itemView: View, private val binding: NoteListItemBinding) : ViewHolder(itemView) {
+    class NoteViewHolder(
+        itemView: View, private val binding: NoteListItemBinding,
+        private val noteInteractionListener: NoteInteractionListener
+    ) : ViewHolder(itemView) {
         fun bind(note: Note) {
             binding.apply {
                 contentTextView.text = note.content
                 titleTextView.text = note.title
+                deleteButton.setOnClickListener {
+                    noteInteractionListener.noteDeleted(note.id)
+                }
             }
         }
     }

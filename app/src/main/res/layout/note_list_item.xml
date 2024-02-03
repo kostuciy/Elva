@@ -25,7 +25,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="5dp"
         android:ellipsize="end"
-        android:maxEms="20"
+        android:maxEms="15"
         android:paddingStart="@dimen/common_space"
         android:paddingEnd="@dimen/common_space"
         android:singleLine="true"
@@ -34,4 +34,13 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/title_text_view"
         tools:text="1) Buy groceries 2) Do 70 push ups 3) lalalalalalalalalalalalalalal" />
+
+    <Button
+        android:id="@+id/delete_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/delete"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

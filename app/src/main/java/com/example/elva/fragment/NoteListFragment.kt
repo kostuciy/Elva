@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.elva.adapter.NoteAdapter
 import com.example.elva.adapter.NoteInteractionListener
 import com.example.elva.databinding.FragmentNoteListBinding
+import com.example.elva.dto.Note
 import com.example.elva.viewmodel.NoteViewModel
 
 class NoteListFragment : Fragment() {
@@ -18,21 +19,31 @@ class NoteListFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
         val binding =
             FragmentNoteListBinding.inflate(layoutInflater, container, false)
 
         val viewModel: NoteViewModel by viewModels()
 
-//        recyclerView = findViewById(R.id.recyclerView)
-//        recyclerView.layoutManager = LinearLayoutManager(this)
-//        recyclerView.adapter = ItemAdapter(items)
         val recyclerView = binding.noteRecyclerView
+        val noteAdapter = NoteAdapter(object : NoteInteractionListener {
+
+            override fun noteChanged(id: Long, newNote: Note): Note {
+                TODO("Not yet implemented")
+            }
+
+            override fun noteDeleted(id: Long): Note {
+                return viewModel.delete(id)
+            }
+        }).apply { submitList(viewModel.getAll()) }
         recyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
-            adapter = NoteAdapter(object : NoteInteractionListener {
-//                TODO: implement LiveData,
-            }).apply { submitList(viewModel.getAll()) }
+            adapter = noteAdapter
+        }
+
+        viewModel.apply {
+            noteData.observe(viewLifecycleOwner) { noteList ->
+                noteAdapter.submitList(noteList)
+            }
         }
 
         return binding.root
