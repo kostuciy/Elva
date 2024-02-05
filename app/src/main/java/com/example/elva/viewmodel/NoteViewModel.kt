@@ -4,37 +4,59 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.elva.dto.Note
+import com.example.elva.model.NoteState
 import com.example.elva.repository.NoteRepository
-import java.lang.IllegalArgumentException
+
+
 
 class NoteViewModel : ViewModel() {
 
     private val repository = NoteRepository()
-    private val _noteData: MutableLiveData<List<Note>> by lazy {
-        MutableLiveData(emptyList())
+    private val _noteState: MutableLiveData<NoteState> by lazy {
+        MutableLiveData(NoteState())
     }
-    val noteData: LiveData<List<Note>>
-        get() = _noteData
+    val noteState: LiveData<NoteState>
+        get() = _noteState
 
     init {
-        _noteData.value = getAll()
+        val noteList = getAll()
+        _noteState.value = NoteState(
+            noteList = noteList,
+            empty = noteList.isEmpty()
+        )
     }
 
-    fun getAll(): List<Note> = repository.getAll()
+    private fun sync() {
+        val noteList = getAll()
+        _noteState.value = _noteState.value?.copy(
+            noteList = noteList, empty = noteList.isEmpty()
+        ) ?: NoteState(error = true)
+    }
 
-    private fun findById(id: Long): Note =
-        _noteData.value?.find { it.id == id } ?: throw IllegalArgumentException("no post found")
+    fun toEdited(note: Note) {
+        _noteState.value = _noteState.value?.copy(lastEdited = note)
+    }
+    private fun getAll(): List<Note> = repository.getAll()
 
+    private fun findById(id: Long): Note {
+        _noteState.value?.noteList?.find { it.id == id }.let { note ->
+            if (note != null) return note
+            _noteState.value = _noteState.value?.copy(error = true)
+            return Note.EMPTY_NOTE
+        }
+    }
 
-    fun save(id: Long) {
-        val note = repository.save(findById(id))
-        _noteData.value = getAll()
+//    saves note in "lastEdited" field
+    fun save() {
+        repository.save(noteState.value?.lastEdited ?: Note.EMPTY_NOTE)
+        toEdited(Note.EMPTY_NOTE)
+        sync()
     }
 
 
     fun delete(id: Long): Note {
         val note = repository.delete(findById(id))
-        _noteData.value = getAll()
+        sync()
 
         return note
     }
@@ -42,9 +64,13 @@ class NoteViewModel : ViewModel() {
 
     fun edit(id: Long, newNote: Note): Note {
         val note = repository.edit(findById(id), newNote)
-        _noteData.value = getAll()
+        sync()
 
         return note
     }
 
 }
+
+
+
+

@@ -14,7 +14,7 @@ class NoteRepository : Repository<Note> {
         )
 
     override fun save(note: Note): Note {
-        testList = testList + note
+        testList = testList + note.copy(id = note.hashCode().toLong())
         return note
     }
 

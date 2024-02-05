@@ -9,5 +9,14 @@
         android:id="@+id/mainFragment"
         android:name="com.example.elva.fragment.NoteListFragment"
         android:label="fragment_main"
-        tools:layout="@layout/fragment_note_list" />
+        tools:layout="@layout/fragment_note_list" >
+        <action
+            android:id="@+id/action_mainFragment_to_noteCreationFragment"
+            app:destination="@id/noteCreationFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/noteCreationFragment"
+        android:name="com.example.elva.fragment.NoteCreationFragment"
+        android:label="fragment_note_creation"
+        tools:layout="@layout/fragment_note_creation" />
 </navigation>

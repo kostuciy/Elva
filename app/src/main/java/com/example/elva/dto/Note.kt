@@ -7,6 +7,12 @@ data class Note(
     val timestamp: Long = System.currentTimeMillis(),
     val color: NoteColor = NoteColor.DEFAULT) {
 
+    companion object {
+        val EMPTY_NOTE = Note(
+            0, "", "", 0
+        )
+    }
+
     enum class NoteColor() {
         RED,
         ORANGE,
