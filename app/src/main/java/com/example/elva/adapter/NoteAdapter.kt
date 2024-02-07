@@ -10,8 +10,8 @@ import com.example.elva.databinding.NoteListItemBinding
 import com.example.elva.dto.Note
 
 interface NoteInteractionListener {
-    fun noteChanged(id: Long, newNote: Note): Note
-
+//    fun noteChanged(id: Long, newNote: Note): Note
+    fun noteClicked(note: Note)
     fun noteDeleted(id: Long): Note
 
 
@@ -44,6 +44,9 @@ class NoteAdapter(private val noteInteractionListener: NoteInteractionListener)
                 titleTextView.text = note.title
                 deleteButton.setOnClickListener {
                     noteInteractionListener.noteDeleted(note.id)
+                }
+                root.setOnClickListener {
+                    noteInteractionListener.noteClicked(note)
                 }
             }
         }

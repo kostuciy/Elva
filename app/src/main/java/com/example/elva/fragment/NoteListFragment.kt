@@ -30,8 +30,9 @@ class NoteListFragment : Fragment() {
         val navController = findNavController()
         val noteAdapter = NoteAdapter(object : NoteInteractionListener {
 
-            override fun noteChanged(id: Long, newNote: Note): Note {
-                TODO("Not yet implemented")
+            override fun noteClicked(note: Note) {
+                viewModel.toEdited(note)
+                navController.navigate(R.id.action_mainFragment_to_noteCreationFragment)
             }
 
             override fun noteDeleted(id: Long): Note {

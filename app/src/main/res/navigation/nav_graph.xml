@@ -16,7 +16,7 @@
     </fragment>
     <fragment
         android:id="@+id/noteCreationFragment"
-        android:name="com.example.elva.fragment.NoteCreationFragment"
+        android:name="com.example.elva.fragment.NoteEditFragment"
         android:label="fragment_note_creation"
-        tools:layout="@layout/fragment_note_creation" />
+        tools:layout="@layout/fragment_note_edit" />
 </navigation>

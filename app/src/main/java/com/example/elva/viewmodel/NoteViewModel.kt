@@ -46,7 +46,7 @@ class NoteViewModel : ViewModel() {
         }
     }
 
-//    saves note in "lastEdited" field
+//    saves note in "lastEdited" field and sets it empty
     fun save() {
         repository.save(noteState.value?.lastEdited ?: Note.EMPTY_NOTE)
         toEdited(Note.EMPTY_NOTE)
@@ -62,6 +62,7 @@ class NoteViewModel : ViewModel() {
     }
 
 
+//    Todo: delete? (check is save fun does the same)
     fun edit(id: Long, newNote: Note): Note {
         val note = repository.edit(findById(id), newNote)
         sync()
