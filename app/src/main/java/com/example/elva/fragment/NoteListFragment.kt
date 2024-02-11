@@ -48,6 +48,7 @@ class NoteListFragment : Fragment() {
                 adapter = noteAdapter
             }
             createButton.setOnClickListener {
+                viewModel.toEdited(Note.EMPTY_NOTE)
                 navController.navigate(R.id.action_mainFragment_to_noteCreationFragment)
             }
         }

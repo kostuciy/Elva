@@ -7,4 +7,10 @@
     <string name="new_note_name">New Note</string>
     <string name="write_something">Write something</string>
     <string name="save">Save</string>
+    <string name="attach_file">attach file</string>
+    <string name="add_drawing">add drawing</string>
+    <string name="delete_attachment">delete attachment</string>
+    <string name="move_up">move up</string>
+    <string name="move_down">move down</string>
+    <string name="delete_block">delete</string>
 </resources>

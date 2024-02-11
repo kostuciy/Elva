@@ -39,6 +39,7 @@ android {
 }
 
 dependencies {
+    implementation("com.jakewharton.rxbinding4:rxbinding:4.0.0")
     val nav_version = "2.7.6"
     implementation("androidx.navigation:navigation-fragment-ktx:$nav_version")
     implementation("androidx.navigation:navigation-ui-ktx:$nav_version")

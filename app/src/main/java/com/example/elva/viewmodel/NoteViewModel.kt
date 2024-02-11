@@ -7,8 +7,6 @@ import com.example.elva.dto.Note
 import com.example.elva.model.NoteState
 import com.example.elva.repository.NoteRepository
 
-
-
 class NoteViewModel : ViewModel() {
 
     private val repository = NoteRepository()
@@ -70,7 +68,20 @@ class NoteViewModel : ViewModel() {
         return note
     }
 
+//    does not update note list, provides updated list of blocks locally
+//    (to be used in block recycler view only)
+    fun updateBlocksLocal(block: Note.Block, blocks: List<Note.Block>): List<Note.Block> =
+        if (blocks.isEmpty() || block.id !in blocks.map { it.id }) blocks + block.copy(
+            id = if (blocks.isEmpty()) 1 else blocks.maxOf { it.id } + 1
+        )
+        else blocks.map { if (it.id == block.id) block else it }
+
+    fun deleteBlockLocal(blockId: Long, blocks: List<Note.Block>): List<Note.Block> =
+        blocks.filter { it.id != blockId }
+
 }
+
+
 
 
 

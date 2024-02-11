@@ -40,7 +40,7 @@ class NoteAdapter(private val noteInteractionListener: NoteInteractionListener)
     ) : ViewHolder(itemView) {
         fun bind(note: Note) {
             binding.apply {
-                contentTextView.text = note.content
+                contentTextView.text = note[0L]?.text.orEmpty()
                 titleTextView.text = note.title
                 deleteButton.setOnClickListener {
                     noteInteractionListener.noteDeleted(note.id)

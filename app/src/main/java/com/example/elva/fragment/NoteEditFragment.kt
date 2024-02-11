@@ -4,10 +4,14 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.PopupMenu
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.elva.R
+import com.example.elva.adapter.BlockAdapter
+import com.example.elva.adapter.BlockInteractionListener
 import com.example.elva.databinding.FragmentNoteEditBinding
 import com.example.elva.dto.Note
 import com.example.elva.viewmodel.NoteViewModel
@@ -24,12 +28,40 @@ class NoteEditFragment : Fragment() {
 
         val viewModel: NoteViewModel by activityViewModels()
         val navController = findNavController()
+        var currentBlockList = viewModel.noteState.value?.lastEdited?.blocks ?: emptyList()
+        val blockAdapter = BlockAdapter(object : BlockInteractionListener {
+
+            override fun blockDeleted(block: Note.Block): List<Note.Block> {
+                currentBlockList = viewModel.deleteBlockLocal(block.id, currentBlockList)
+                return currentBlockList
+            }
+
+            override fun blockChanged(block: Note.Block) {
+                currentBlockList =
+                    viewModel.updateBlocksLocal(block, currentBlockList)
+            }
+
+        })
+
 
         binding.apply {
+            blockRecyclerView.apply {
+                layoutManager = LinearLayoutManager(requireContext())
+                adapter = blockAdapter
+            }
+
+            constraintLayout.setOnClickListener {
+                val newList =
+                    viewModel.updateBlocksLocal(Note.Block.EMPTY_BLOCK, blockAdapter.currentList)
+                blockAdapter.submitList(newList)
+                currentBlockList = blockAdapter.currentList
+            }
+
             viewModel.noteState.value?.lastEdited?.let { clickedNote ->
                 if (clickedNote == Note.EMPTY_NOTE) return@let
                 titleEditText.setText(clickedNote.title)
-                contentEditText.setText(clickedNote.content)
+                blockAdapter.submitList(clickedNote.blocks)
+
             }
 
             toolbar.apply {
@@ -39,9 +71,9 @@ class NoteEditFragment : Fragment() {
                         R.id.action_save -> {
                             viewModel.toEdited(
                                 Note(
-                                    0,
+                                    viewModel.noteState.value?.lastEdited?.id ?: 0L,
                                     titleEditText.text.toString().ifEmpty { "Unnamed Note" },
-                                    contentEditText.text.toString()
+                                    currentBlockList
                                 )
                             )
                             viewModel.save()
@@ -55,5 +87,4 @@ class NoteEditFragment : Fragment() {
 
         return binding.root
     }
-
 }
