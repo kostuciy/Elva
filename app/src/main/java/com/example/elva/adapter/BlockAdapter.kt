@@ -1,10 +1,11 @@
 package com.example.elva.adapter
 
+import android.text.TextWatcher
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.PopupMenu
-import androidx.core.widget.addTextChangedListener
 import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -13,20 +14,12 @@ import com.example.elva.R
 import com.example.elva.databinding.NoteBlockBinding
 import com.example.elva.dto.Note
 import com.example.elva.dto.Note.Block
-import com.jakewharton.rxbinding4.widget.textChangeEvents
-import com.jakewharton.rxbinding4.widget.textChanges
-import io.reactivex.rxjava3.android.plugins.RxAndroidPlugins
-import io.reactivex.rxjava3.plugins.RxJavaPlugins
-import java.util.concurrent.TimeUnit
 
 interface BlockInteractionListener {
 
-    fun blockDeleted(block: Block): List<Block>
-
-    fun blockChanged(block: Block)
+    fun blocksUpdateState(finished: Boolean)
 
 }
-
 class BlockAdapter(private val blockInteractionListener: BlockInteractionListener)
     : ListAdapter<Block, BlockAdapter.BlockViewHolder>(BlockDiffCallback) {
 
@@ -34,7 +27,7 @@ class BlockAdapter(private val blockInteractionListener: BlockInteractionListene
         val binding = NoteBlockBinding.inflate(
             LayoutInflater.from(parent.context), parent, false)
 
-        return BlockViewHolder(binding.root, binding, blockInteractionListener, ::submitList)
+        return BlockViewHolder(binding.root, binding, blockInteractionListener, this)
     }
 
     override fun onBindViewHolder(holder: BlockViewHolder, position: Int) {
@@ -42,37 +35,84 @@ class BlockAdapter(private val blockInteractionListener: BlockInteractionListene
         holder.bind(note)
     }
 
+    override fun getItemId(position: Int) = position.toLong()
+
+    override fun getItemViewType(position: Int) = position
+
+    override fun onViewDetachedFromWindow(holder: BlockViewHolder) {
+        holder.disableTextWatcher()
+    }
+
+    override fun submitList(list: List<Block>?) {
+        super.submitList(null)
+        super.submitList(list)
+        currentEditedList = currentList
+    }
+
+    fun submitToSync() {
+        submitList(currentEditedList)
+    }
+
+
+    private var currentEditedList: List<Block> = currentList
+
+    fun updateBlocksLocal(block: Block) {
+//        val blockIndex =
+//            currentEditedList.ifEmpty { null }?.withIndex()?.find { it.value.id == block.id }?.index
+//
+//        currentEditedList =
+//            if (blockIndex != null) currentEditedList.map { if (it.id == block.id) block else it }
+//            else currentEditedList + block.copy(
+//                id = if (currentEditedList.isEmpty()) 1 else currentEditedList.maxOf { it.id } + 1
+//            )
+        Log.d("GUG", "Adding block: $block\nto cur list: ${currentEditedList}")
+        currentEditedList =
+            if (currentEditedList.isEmpty() || block.id !in currentEditedList.map { it.id })
+                currentEditedList + block.copy(
+                    id = if (currentEditedList.isEmpty()) 1 else currentEditedList.maxOf { it.id } + 1
+                )
+        else currentEditedList.map { if (it.id == block.id) block else it }
+        Log.d("GUG", "Added, current list: ${currentEditedList}")
+    }
+
+    fun deleteBlockLocal(blockId: Long) {
+        currentEditedList = currentEditedList.filter { it.id != blockId }
+    }
+
+
     class BlockViewHolder(
         itemView: View, private val binding: NoteBlockBinding,
-        private val blockInteractionListener: BlockInteractionListener,
-        private val updateCallback: (blockList: List<Block>) -> Unit
+        private val blockInteractionListener: BlockInteractionListener, // TODO: add funs or remove
+        private val adapter: BlockAdapter,
     ) : RecyclerView.ViewHolder(itemView) {
+
+        private var textWatcher: TextWatcher? = null
+
+        fun disableTextWatcher() {
+            binding.editText.removeTextChangedListener(textWatcher)
+        }
+
         fun bind(block: Note.Block) {
             binding.apply {
-//                when changing block's text in edit view nothing saves to recycler view list
-//                (changes apply only to edit view) so after every block change blockList of note
-//                saves to currentBlocklist in fragment (updates by interaction listener) and
-//                then saves to VM and rep only when save button pressed
 
                 editText.apply {
+                    requestFocus()
                     setText(block.text)
-                    textChanges().debounce(350, TimeUnit.MILLISECONDS).subscribe { textChanged ->
-                        blockInteractionListener.blockChanged(
-                            block.copy(text = textChanged.toString())
-                        )
-                    }
+                    doAfterTextChanged {
+                        adapter.updateBlocksLocal(block.copy(text = it.toString()))
+                    }.let { textWatcher = it }
 
                 }
 
                 root.setOnLongClickListener {
                     PopupMenu(binding.root.context, binding.root).apply {
-//                    creating popping block options
+//                    creating popping block's options
                         menuInflater.inflate(R.menu.block_popup_menu, this.menu)
                         setOnMenuItemClickListener { menuItem ->
                             when (menuItem.itemId) {
                                 R.id.action_delete_block -> {
-                                    val newList = blockInteractionListener.blockDeleted(block)
-                                    updateCallback(newList)
+                                    adapter.deleteBlockLocal(block.id)
+                                    adapter.submitToSync()
                                     true
                                 }
 
@@ -93,6 +133,7 @@ class BlockAdapter(private val blockInteractionListener: BlockInteractionListene
         }
     }
 }
+
 
 object BlockDiffCallback : DiffUtil.ItemCallback<Block>() {
     override fun areItemsTheSame(oldItem: Block, newItem: Block): Boolean {

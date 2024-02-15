@@ -9,6 +9,8 @@ data class Note(
 
     operator fun get(blockId: Long): Block? =
         blocks.find { it.id == blockId }
+    operator fun get(blockIndex: Int): Block? =
+        if (!blocks.isEmpty()) blocks[0] else null
 
     companion object {
         val EMPTY_NOTE = Note(

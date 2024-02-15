@@ -4,11 +4,13 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.PopupMenu
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.OnScrollListener
 import com.example.elva.R
 import com.example.elva.adapter.BlockAdapter
 import com.example.elva.adapter.BlockInteractionListener
@@ -25,36 +27,35 @@ class NoteEditFragment : Fragment() {
         val binding =
             FragmentNoteEditBinding.inflate(layoutInflater, container, false)
 
-
         val viewModel: NoteViewModel by activityViewModels()
         val navController = findNavController()
-        var currentBlockList = viewModel.noteState.value?.lastEdited?.blocks ?: emptyList()
-        val blockAdapter = BlockAdapter(object : BlockInteractionListener {
+        val blockAdapter = BlockAdapter(object : BlockInteractionListener { // TODO: use somewhere or delete
 
-            override fun blockDeleted(block: Note.Block): List<Note.Block> {
-                currentBlockList = viewModel.deleteBlockLocal(block.id, currentBlockList)
-                return currentBlockList
+            override fun blocksUpdateState(finished: Boolean) {
             }
-
-            override fun blockChanged(block: Note.Block) {
-                currentBlockList =
-                    viewModel.updateBlocksLocal(block, currentBlockList)
-            }
-
         })
+
 
 
         binding.apply {
             blockRecyclerView.apply {
                 layoutManager = LinearLayoutManager(requireContext())
                 adapter = blockAdapter
+                addOnScrollListener(object : OnScrollListener() {
+
+                    override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                        if (dy > 0) {
+                            titleEditText.visibility = View.GONE
+                        } else {
+                            if (!titleEditText.isVisible) titleEditText.visibility = View.VISIBLE
+                        }
+                    }
+                })
             }
 
             constraintLayout.setOnClickListener {
-                val newList =
-                    viewModel.updateBlocksLocal(Note.Block.EMPTY_BLOCK, blockAdapter.currentList)
-                blockAdapter.submitList(newList)
-                currentBlockList = blockAdapter.currentList
+                blockAdapter.updateBlocksLocal(Note.Block.EMPTY_BLOCK)
+                blockAdapter.submitToSync()
             }
 
             viewModel.noteState.value?.lastEdited?.let { clickedNote ->
@@ -69,15 +70,17 @@ class NoteEditFragment : Fragment() {
                 setOnMenuItemClickListener { menuItem ->
                     when (menuItem.itemId) {
                         R.id.action_save -> {
+                            blockAdapter.submitToSync()
                             viewModel.toEdited(
                                 Note(
                                     viewModel.noteState.value?.lastEdited?.id ?: 0L,
                                     titleEditText.text.toString().ifEmpty { "Unnamed Note" },
-                                    currentBlockList
+                                    blockAdapter.currentList
                                 )
                             )
                             viewModel.save()
                             navController.navigateUp()
+                            true
                         }
                         else -> false
                     }
